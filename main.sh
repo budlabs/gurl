@@ -2,12 +2,12 @@
 
 main(){
 
-  [[ -z ${url:=$1} ]] && ERX no url
-
   dir=${__o[matchers-dir]:-$MATCHERS_DIR}
   
   [[ -z $dir ]] && ERX "MATCHERS_DIR not specified"
   [[ -d $dir ]] || createconf "$dir"
+
+  [[ -z ${url:=$1} ]] && ERX no url
 
   printf '%s\n' "$@" > "$dir/.last"
 
@@ -23,10 +23,14 @@ main(){
     }
   ' "${files[@]}")
 
-  [[ -x ${trg:=$dir/default} ]] \
-    || ERX "$trg is not executable"
+  [[ -f ${trg:=$dir/default} ]] && {
+    export PATH=${tdir:=${trg%/*}}:$dir/_lib:$PATH
+    cd "$tdir" || exit 1
+    :
+  } || trg=${trg##*/}
 
-  PATH=${trg%/*}:$dir/_lib:$PATH exec "$trg" "$@"
+  command -v "$trg" >/dev/null && exec "$trg" "$@"
+  ERX "$trg is not executable"
 }
 
 ___source="$(readlink -f "${BASH_SOURCE[0]}")"  #bashbud
