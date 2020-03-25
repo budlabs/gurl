@@ -1,8 +1,9 @@
-`gurl` - SHORT DESCRIPTION
+`gurl` - simple plumbing framework
 
 SYNOPSIS
 --------
 ```text
+gurl [--matchers-dir|-d DIR] URL [ARG...]
 gurl --help|-h
 gurl --version|-v
 ```
@@ -14,6 +15,8 @@ LONG DESCRIPTION
 
 OPTIONS
 -------
+
+`--matchers-dir`|`-d` URL  
 
 `--help`|`-h`  
 Show help and exit.
@@ -29,11 +32,14 @@ ENVIRONMENT
 
 defaults to: $HOME/.config
 
+`MATCHERS_DIR`  
+
+defaults to: $HOME/.config/gurl
+
 DEPENDENCIES
 ------------
 `bash`
 `gawk`
-`sed`
 
 
 

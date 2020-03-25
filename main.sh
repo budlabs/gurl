@@ -2,38 +2,31 @@
 
 main(){
 
-  while getopts :d: _ ; do _dir=${OPTARG}; done
-  shift $((OPTIND-1))
+  [[ -z ${url:=$1} ]] && ERX no url
 
-  [[ -z ${_url:=$1} ]] && ERX no url
+  dir=${__o[matchers-dir]:-$MATCHERS_DIR}
+  
+  [[ -z $dir ]] && ERX "MATCHERS_DIR not specified"
+  [[ -d $dir ]] || createconf "$dir"
 
-  [[ -d ${_dir:=$MATCHERS_DIR} ]] || {
-    _source=$(readlink -f "${BASH_SOURCE[0]}")
-    _dir=${_source%/*}/matchers
-    [[ -d $_dir ]] || ERX MATCHERS_DIR: "$_dir" not found
-  }
+  printf '%s\n' "$@" > "$dir/.last"
 
-  [[ -d $_dir/_lib ]] && newpath="$_dir/_lib:$PATH"
+  mapfile -t files < <(find "$dir" -name match)
 
-  printf '%s\n' "$@" > "$_dir/.last"
-
-  mapfile -t matchfiles < <(
-    find "$_dir" -mindepth 1 -type f -name match)
-
-  (( ${#matchfiles[@]} > 0 )) && mapfile -t matchlist < <(
-    awk '/^[^#]/ { print gensub(/[^/]+$/,"",1,FILENAME) $0 }' \
-    "${matchfiles[@]}")
-
-  for e in "${matchlist[@]}"; do
-    re=${e#*: } trg=${e%%: *}
-    [[ $_url =~ ${re} ]] && {
-      [[ -x $trg ]] || ERX "$trg is not executable"
-      PATH="${trg%/*}:${newpath:-$PATH}" exec "$trg" "$@"
+  ((${#files[@]} > 0)) && trg=$(awk -v url="$url" '
+    /^[^#]/ {
+      if (match(url,gensub(/^.+:\s+/,"",1,$0))) {
+        dir = gensub(/[^/]+$/,"",1,FILENAME)
+        print gensub(/^([^:]+).+/,dir "\\1",1,$1)
+        exit
+      }
     }
-  done
+  ' "${files[@]}")
 
-  [[ -x $_dir/default ]] \
-    && PATH="${newpath:-$PATH}" exec "$_dir/default" "$@"
+  [[ -x ${trg:=$dir/default} ]] \
+    || ERX "$trg is not executable"
+
+  PATH=${trg%/*}:$dir/_lib:$PATH exec "$trg" "$@"
 }
 
 ___source="$(readlink -f "${BASH_SOURCE[0]}")"  #bashbud

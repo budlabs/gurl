@@ -11,21 +11,25 @@ EOB
 
 # environment variables
 : "${XDG_CONFIG_HOME:=$HOME/.config}"
+: "${MATCHERS_DIR:=$HOME/.config/gurl}"
 
 
 ___printhelp(){
   
 cat << 'EOB' >&2
-gurl - SHORT DESCRIPTION
+gurl - simple plumbing framework
 
 
 SYNOPSIS
 --------
+gurl [--matchers-dir|-d DIR] URL [ARG...]
 gurl --help|-h
 gurl --version|-v
 
 OPTIONS
 -------
+
+--matchers-dir|-d URL  
 
 --help|-h  
 Show help and exit.
@@ -44,8 +48,8 @@ done
 declare -A __o
 options="$(
   getopt --name "[ERROR]:gurl" \
-    --options "hv" \
-    --longoptions "help,version," \
+    --options "d:hv" \
+    --longoptions "matchers-dir:,help,version," \
     -- "$@" || exit 77
 )"
 
@@ -54,6 +58,7 @@ unset options
 
 while true; do
   case "$1" in
+    --matchers-dir | -d ) __o[matchers-dir]="${2:-}" ; shift ;;
     --help       | -h ) ___printhelp && exit ;;
     --version    | -v ) ___printversion && exit ;;
     -- ) shift ; break ;;
