@@ -3,15 +3,15 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-gurl - version: 2020.03
-updated: 2020-03-25 by budRich
+gurl - version: 2020.03.26.3
+updated: 2020-03-26 by budRich
 EOB
 }
 
 
 # environment variables
 : "${XDG_CONFIG_HOME:=$HOME/.config}"
-: "${MATCHERS_DIR:=$HOME/.config/gurl}"
+: "${MATCHERS_DIR:=$XDG_CONFIG_HOME/gurl}"
 
 
 main(){
@@ -25,11 +25,12 @@ main(){
 
   printf '%s\n' "$@" > "$dir/.last"
 
-  mapfile -t files < <(find "$dir" -name match)
+  files=("$dir"/*/match)
+  [[ -f $dir/match ]] && files+=("$dir/match")
 
-  ((${#files[@]} > 0)) && trg=$(awk -v url="$url" '
+  ((${#files[@]} > 0)) && trg=$(awk -v URL="$url" '
     /^[^#]/ {
-      if (match(url,gensub(/^.+:\s+/,"",1,$0))) {
+      if (match(URL,gensub(/^[^:]+:\s+/,"",1,$0))) {
         dir = gensub(/[^/]+$/,"",1,FILENAME)
         print gensub(/^([^:]+).+/,dir "\\1",1,$1)
         exit
@@ -63,6 +64,9 @@ OPTIONS
 -------
 
 --matchers-dir|-d URL  
+Override the environment variable MATCHERS_DIR
+with DIR.
+
 
 --help|-h  
 Show help and exit.
@@ -74,12 +78,85 @@ EOB
 }
 
 
+createconf() {
+local trgdir="$1"
+declare -a aconfdirs
+
+aconfdirs=(
+"$trgdir/github"
+"$trgdir/github/assets"
+"$trgdir/_lib"
+"$trgdir/youtube"
+)
+
+mkdir -p "$1" "${aconfdirs[@]}"
+
+cat << 'EOCONF' > "$trgdir/github/assets/vars"
+clone_dir=$HOME/git/clones
+EOCONF
+
+cat << 'EOCONF' > "$trgdir/github/match"
+ghfile.sh: (http[s]?://)?.*github[.]com.*/(blob|raw)/.+
+repo.sh:   (http[s]?://)?.*github[.]com/[^/]+/[^/]
+EOCONF
+
+cat << 'EOCONF' > "$trgdir/github/repo.sh"
+
+source assets/vars
+
+[[ $1 =~ (http[s]?://)?.*github[.]com/([^/]+/[^/]+) ]] \
+    && repo=${BASH_REMATCH[2]}
+
+prompt="clone $repo to $clone_dir/${repo#*/}? "
+
+[[ $(ynp.sh "$prompt") = yes ]] && message.sh "you answered yes"
+EOCONF
+
+chmod +x "$trgdir/github/repo.sh"
+cat << 'EOCONF' > "$trgdir/github/ghfile.sh"
+message.sh "$1 is a github file, download link in clipboard"
+
+cb.sh "${1/blob/raw}"
+EOCONF
+
+chmod +x "$trgdir/github/ghfile.sh"
+cat << 'EOCONF' > "$trgdir/default"
+echo no pattern matching: "$1"
+EOCONF
+
+chmod +x "$trgdir/default"
+cat << 'EOCONF' > "$trgdir/_lib/ynp.sh"
+echo -e "yes\nno" | dmenu -p "$1"
+EOCONF
+
+chmod +x "$trgdir/_lib/ynp.sh"
+cat << 'EOCONF' > "$trgdir/_lib/message.sh"
+notify-send "$*"
+EOCONF
+
+chmod +x "$trgdir/_lib/message.sh"
+cat << 'EOCONF' > "$trgdir/_lib/cb.sh"
+echo -n "$1" | xclip -sel c
+EOCONF
+
+chmod +x "$trgdir/_lib/cb.sh"
+cat << 'EOCONF' > "$trgdir/youtube/youtube.sh"
+message.sh "a youtube link!"
+EOCONF
+
+chmod +x "$trgdir/youtube/youtube.sh"
+cat << 'EOCONF' > "$trgdir/match"
+youtube.sh: (http[s]?://)?.*youtube[.]com.*
+notify-send: (http[s]?://)?.*google[.]com.*
+EOCONF
+
+}
 set -E
 trap '[ "$?" -ne 77 ] || exit 77' ERR
 
 ERM(){
 
-  local mode
+  local mode OPTIND
 
   getopts xr mode
   case "$mode" in
@@ -108,47 +185,6 @@ ERH(){
     [[ -n "$*" ]] && printf '\n%s\n' "$*"
   } >&2 
   exit 77
-}
-
-__=""
-__stdin=""
-
-read -N1 -t0.01 __  && {
-  (( $? <= 128 ))  && {
-    IFS= read -rd '' __stdin
-    __stdin="$__$__stdin"
-  }
-}
-
-YNP() {
-
-  local sp key default opts status
-
-  default=y
-  opts=yn
-
-  [[ $1 =~ -([${opts}]) ]] \
-    && default="${BASH_REMATCH[1]}" && shift
-
-  sp="$* [${default^^}/${opts/$default/}]"
-
-  if [[ -t 2 ]]; then
-    >&2 echo "$sp"
-
-    while :; do
-      read -rsn 1
-
-      key="${REPLY:-$default}"
-      [[ $key =~ [${opts}] ]] || continue
-      break
-    done
-  else
-    key="$default"
-  fi
-
-  [[ ${key,,} = n ]] && status=1
-
-  return "${status:-0}"
 }
 
 declare -A __o
