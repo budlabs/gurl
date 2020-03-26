@@ -2,7 +2,8 @@
 .TH GURL 1 2020\-03\-26 Linux "User Manuals"
 .SH NAME
 .PP
-\fB\fCgurl\fR \- simple plumbing framework
+\fB\fCgurl\fR \- ganoo slash URL handler / framework
+builder
 
 .SH SYNOPSIS
 .PP
@@ -24,8 +25,19 @@ files named \fB\fCmatch\fR located in \fBMATCHERS\_DIR\fP
 (\fIdefaults to \~/.config/gurl\fP) including
 subdirectories. The syntax for the rules are as
 follows:
-.br
-\fB\fCACTION: PATTERN\fR
+
+.PP
+.RS
+
+.nf
+ACTION: PATTERN
+
+# blank lines and lines starting with sharp (#)
+# will be ignored.
+ACTION2: PATTERN2
+
+.fi
+.RE
 
 .PP
 \fBACTION\fP is a command either in \fBPATH\fP or
@@ -38,8 +50,9 @@ expression.
 All arguments passed to \fBgurl\fP will be
 forwarded to \fBACTION\fP\&. If \fBACTION\fP is a
 executable file in \fBMATCHERS\_DIR\fP, the directory
-of the \fBACTION\fP and \fBMATCHERS\_DIR\fP/\_lib will
-be added to \fBPATH\fP\&.
+of the \fBACTION\fP will be the actions working
+directory, \fBMATCHERS\_DIR\fP/\_lib will be added to
+\fBPATH\fP\&.
 
 .PP
 If no match is found, \fBACTION\fP is set to
@@ -47,7 +60,7 @@ If no match is found, \fBACTION\fP is set to
 
 .SH OPTIONS
 .PP
-\fB\fC\-\-matchers\-dir\fR|\fB\fC\-d\fR URL
+\fB\fC\-\-matchers\-dir\fR|\fB\fC\-d\fR DIR
 .br
 Override the environment variable
 \fBMATCHERS\_DIR\fP with DIR.
@@ -255,7 +268,7 @@ echo no pattern matching: "$1"
 .RS
 
 .nf
-youtube.sh: (http[s]?://)?.*youtube[.]com.*
+youtube/youtube.sh: (http[s]?://)?.*youtube[.]com.*
 notify\-send: (http[s]?://)?.*google[.]com.*
 
 .fi
@@ -263,7 +276,7 @@ notify\-send: (http[s]?://)?.*google[.]com.*
 
 .PP
 notice how commands can be used for actions
-(\fB\fCnotify\-send\fR)..
+(\fB\fCnotify\-send\fR).
 
 .SH ENVIRONMENT
 .PP

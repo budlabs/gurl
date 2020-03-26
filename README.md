@@ -1,25 +1,43 @@
-# gurl - simple plumbing framework 
+# gurl - ganoo slash URL handler / framework builder 
 
-Imagine you want to download a podcast, editing the
-filename in dmenu before saving, automatically add thumbnail
-and albumart add a notification, maybe convert the audio to
-mp3. The whole process consist of functions that may or may
-not be useful for other links, (images, video, torrent links
-etc). But it gets hard to maintain if all functions are
-scattered around the filesystem, and PATH gets cluttered.
-Not to mention, keeping notifications and menus consistent
-across the scripts.  
+Imagine you have a URL to a podcast episode. You want to
+download the file, edit the filename in dmenu before saving,
+automatically add thumbnail and albumart add a notification,
+maybe convert the audio to mp3. The whole process consist of
+functions that may or may not be useful for other links,
+(images, video, torrent links etc). But it gets hard to
+maintain if all functions are scattered around the
+filesystem. Not to mention, keeping notifications and menus
+consistent across the scripts. You also want to have the
+pattern matching close to the scripts so to speak, but maybe
+not **in** the scripts..  
 
 **gurl** tries to solve this by using a special directory
 for all patterns, commands and common dirthack utilities one
-creates to handle URLs (in theory it doesn't have to be a
-URL either..).  
+creates to handle URLs.  
 
 The **gurl** function itself is just \~30 lines of bash and awk, but it sets a nice environment for managing and creating URL handlers.
 
 ## installation
 
-install instructions
+If you use **Arch Linux** you can get **gurl** from
+[AUR](https://aur.archlinux.org/packages/gurl/).  
+
+Use the `make(1)` to do a systemwide installation of both
+the script and the manpage.  
+
+(*configure the installation destination in the Makefile,
+if needed*)
+
+```
+$ git clone https://github.com/budlabs/gurl.git
+$ cd gurl
+# make install
+$ gurl -v
+gurl - version: 2020.03.26.3
+updated: 2020-03-26 by budRich
+```
+
 
 USAGE
 -----
@@ -28,8 +46,15 @@ When **gurl** is executed it will match it's first
 argument, (URL) against rules defined in files named `match`
 located in **MATCHERS_DIR** (*defaults to ~/.config/gurl*)
 including subdirectories. The syntax for the rules are as
-follows:  
-`ACTION: PATTERN`
+follows:
+```  
+ACTION: PATTERN
+
+# blank lines and lines starting with sharp (#)
+# will be ignored.
+ACTION2: PATTERN2
+```
+
 
 **ACTION** is a command either in **PATH** or relative to
 the *match file*.  
@@ -37,8 +62,9 @@ the *match file*.
 
 All arguments passed to **gurl** will be forwarded to
 **ACTION**. If **ACTION** is a executable file in
-**MATCHERS_DIR**, the directory of the **ACTION** and
-**MATCHERS_DIR**/\_lib will be added to **PATH**.  
+**MATCHERS_DIR**, the directory of the **ACTION** will be
+the actions working directory, **MATCHERS_DIR**/\_lib will
+be added to **PATH**.  
 
 If no match is found, **ACTION** is set to **MATCHERS_DIR**/default.
 
@@ -53,7 +79,7 @@ gurl --version|-v
 ```
 
 
-`--matchers-dir`|`-d` URL  
+`--matchers-dir`|`-d` DIR  
 Override the environment variable **MATCHERS_DIR** with
 DIR.
 
@@ -183,12 +209,18 @@ echo no pattern matching: "$1"
 
 `~/.config/gurl/match`
 ``` text
-youtube.sh: (http[s]?://)?.*youtube[.]com.*
+youtube/youtube.sh: (http[s]?://)?.*youtube[.]com.*
 notify-send: (http[s]?://)?.*google[.]com.*
 ```
 
 
-notice how commands can be used for actions (`notify-send`)..  
+notice how commands can be used for actions (`notify-send`).  
+## updates
+
+#### 20.03.26.1
+
+Initial release.
+
 
 
 

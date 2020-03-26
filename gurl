@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-gurl - version: 2020.03.26.3
+gurl - version: 2020.03.26.5
 updated: 2020-03-26 by budRich
 EOB
 }
@@ -51,7 +51,7 @@ main(){
 ___printhelp(){
   
 cat << 'EOB' >&2
-gurl - simple plumbing framework
+gurl - ganoo slash URL handler / framework builder
 
 
 SYNOPSIS
@@ -63,7 +63,7 @@ gurl --version|-v
 OPTIONS
 -------
 
---matchers-dir|-d URL  
+--matchers-dir|-d DIR  
 Override the environment variable MATCHERS_DIR
 with DIR.
 
@@ -146,7 +146,7 @@ EOCONF
 
 chmod +x "$trgdir/youtube/youtube.sh"
 cat << 'EOCONF' > "$trgdir/match"
-youtube.sh: (http[s]?://)?.*youtube[.]com.*
+youtube/youtube.sh: (http[s]?://)?.*youtube[.]com.*
 notify-send: (http[s]?://)?.*google[.]com.*
 EOCONF
 
