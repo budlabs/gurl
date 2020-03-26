@@ -1,4 +1,4 @@
-# gurl - ganoo slash URL handler / framework builder 
+# gurl - ganoo slash URL handler and plumber framework 
 
 Imagine you have a URL to a podcast episode. You want to
 download the file, edit the filename in dmenu before saving,
@@ -56,17 +56,17 @@ ACTION2: PATTERN2
 ```
 
 
-**ACTION** is a command either in **PATH** or relative to
-the *match file*.  
-**PATTERN** is a `awk(1)` compatible regular expression.
+*ACTION* is a command either in **PATH** or relative to the
+*match file*.  
+*PATTERN* is a `awk(1)` compatible regular expression.
 
 All arguments passed to **gurl** will be forwarded to
-**ACTION**. If **ACTION** is a executable file in
-**MATCHERS_DIR**, the directory of the **ACTION** will be
-the actions working directory, **MATCHERS_DIR**/\_lib will
-be added to **PATH**.  
+*ACTION*. If *ACTION* is a executable file in
+**MATCHERS_DIR**, the directory of the *ACTION* will be the
+actions working directory, **MATCHERS_DIR/\_lib** will be
+added to **PATH**.  
 
-If no match is found, **ACTION** is set to **MATCHERS_DIR**/default.
+If no match is found, *ACTION* is set to **MATCHERS_DIR/default**.
 
 
 OPTIONS

@@ -3,7 +3,7 @@
 ___printversion(){
   
 cat << 'EOB' >&2
-gurl - version: 2020.03.26.5
+gurl - version: 2020.03.26.6
 updated: 2020-03-26 by budRich
 EOB
 }
@@ -51,7 +51,7 @@ main(){
 ___printhelp(){
   
 cat << 'EOB' >&2
-gurl - ganoo slash URL handler / framework builder
+gurl - ganoo slash URL handler and plumber framework
 
 
 SYNOPSIS

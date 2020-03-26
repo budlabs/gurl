@@ -2,8 +2,8 @@
 .TH GURL 1 2020\-03\-26 Linux "User Manuals"
 .SH NAME
 .PP
-\fB\fCgurl\fR \- ganoo slash URL handler / framework
-builder
+\fB\fCgurl\fR \- ganoo slash URL handler and plumber
+framework
 
 .SH SYNOPSIS
 .PP
@@ -40,23 +40,22 @@ ACTION2: PATTERN2
 .RE
 
 .PP
-\fBACTION\fP is a command either in \fBPATH\fP or
+\fIACTION\fP is a command either in \fBPATH\fP or
 relative to the \fImatch file\fP\&.
 .br
-\fBPATTERN\fP is a \fB\fCawk(1)\fR compatible regular
+\fIPATTERN\fP is a \fB\fCawk(1)\fR compatible regular
 expression.
 
 .PP
 All arguments passed to \fBgurl\fP will be
-forwarded to \fBACTION\fP\&. If \fBACTION\fP is a
-executable file in \fBMATCHERS\_DIR\fP, the directory
-of the \fBACTION\fP will be the actions working
-directory, \fBMATCHERS\_DIR\fP/\_lib will be added to
-\fBPATH\fP\&.
+forwarded to \fIACTION\fP\&. If \fIACTION\fP is a executable
+file in \fBMATCHERS\_DIR\fP, the directory of the
+\fIACTION\fP will be the actions working directory,
+\fBMATCHERS\_DIR/\_lib\fP will be added to \fBPATH\fP\&.
 
 .PP
-If no match is found, \fBACTION\fP is set to
-\fBMATCHERS\_DIR\fP/default.
+If no match is found, \fIACTION\fP is set to
+\fBMATCHERS\_DIR/default\fP\&.
 
 .SH OPTIONS
 .PP
