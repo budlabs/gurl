@@ -39,7 +39,7 @@ updated: 2020-03-26 by budRich
 ```
 
 
-USAGE
+usage
 -----
 
 When **gurl** is executed it will match it's first
@@ -69,7 +69,7 @@ added to **PATH**.
 If no match is found, *ACTION* is set to **MATCHERS_DIR/default**.
 
 
-OPTIONS
+options
 -------
 
 ```text
@@ -89,7 +89,7 @@ Show help and exit.
 `--version`|`-v`  
 Show version and exit.
 
-EXAMPLES
+examples
 --------
 
 **gurl** will add the following filestructure the first
@@ -222,5 +222,8 @@ notice how commands can be used for actions (`notify-send`).
 Initial release.
 
 
+## license
+
+**gurl** is licensed with the **BSD-2-CLAUSE license**
 
 
