@@ -1,22 +1,19 @@
-SCRIPT  = gurl
-MANPAGE = $(SCRIPT).1
-PREFIX  = /usr
-DESTDIR =
-INSTDIR = $(DESTDIR)$(PREFIX)
-INSTBIN = $(INSTDIR)/bin
-INSTMAN = $(INSTDIR)/share/man/man1
+PROGNM  ?= gurl
+PREFIX  ?= /usr
+BINDIR  ?= $(PREFIX)/bin
+SHRDIR  ?= $(PREFIX)/share
+MANDIR  ?= $(SHRDIR)/man/man1
+
+MANPAGE  = $(PROGNM).1
 
 install:
-	test -d $(INSTDIR) || mkdir -p $(INSTDIR)
-	test -d $(INSTBIN) || mkdir -p $(INSTBIN)
-	test -d $(INSTMAN) || mkdir -p $(INSTMAN)
-
-	install -m 0755 $(SCRIPT)  $(INSTBIN)
-	install -m 0644 $(MANPAGE) $(INSTMAN)
+		install -Dm755 $(PROGNM)  -t $(DESTDIR)$(BINDIR)
+		install -Dm644 $(MANPAGE) -t $(DESTDIR)$(MANDIR)
+		install -Dm644 LICENSE    -t $(DESTDIR)$(SHRDIR)/licenses/$(PROGNM)
 .PHONY: install
 
-
 uninstall:
-	$(RM) $(INSTBIN)/$(SCRIPT)
-	$(RM) $(INSTMAN)/$(MANPAGE)
+	rm $(DESTDIR)$(BINDIR)/$(PROGNM)
+	rm $(DESTDIR)$(MANDIR)/$(MANPAGE)
+	rm -rf $(DESTDIR)$(SHRDIR)/licenses/$(PROGNM)
 .PHONY: uninstall

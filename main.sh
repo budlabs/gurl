@@ -2,6 +2,8 @@
 
 main(){
 
+  
+
   dir=${__o[matchers-dir]:-$MATCHERS_DIR}
   
   [[ -z $dir ]] && ERX "MATCHERS_DIR not specified"
@@ -11,7 +13,7 @@ main(){
 
   printf '%s\n' "$@" > "$dir/.last"
 
-  mapfile -t files < <(find "$dir" -name match)
+  mapfile -t files < <(find "${dir}/" -name match)
 
   ((${#files[@]} > 0)) && trg=$(awk -v url="$url" '
     /^[^#]/ {

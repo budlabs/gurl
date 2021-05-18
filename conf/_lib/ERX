@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# ERROR ERROR EXIT
+# ERX "MESSAGE"
+
+# gets the name of parent then kills it before
+# displaying a urgent message
+
+script=$(ps -p $PPID -o comm=)
+kill -TERM $PPID
+
+if IFPID polybar && IFCMD polify; then
+  exec polify --module gurl                   \
+              --background '#CC2222'          \
+              --foreground '#EEEEEE'          \
+              --expire-time 10                \
+              " $script: $* "
+              
+elif IFPID xfce4-panel && IFCMD genmonify; then
+  exec genmonify --module gurl                   \
+                 --background '#CC2222'          \
+                 --foreground '#EEEEEE'          \
+                 --icon "dialog-warning"         \
+                 --expire-time 10                \
+                 " $script: $* "
+  
+else
+  exec notify-send --urgency critical "$script: $*"
+fi

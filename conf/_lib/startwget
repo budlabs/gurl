@@ -1,0 +1,12 @@
+#!/bin/bash
+
+[[ -z ${tmp:=$2} ]] && exit 1
+[[ ${url:=$1} =~ .+/([^/?]+)([?].+)?$ ]] || exit 1
+filename=${BASH_REMATCH[1]}
+
+ERM "downloading: $filename"
+
+mkdir -p "${tmp%/*}"
+wget -qO "$tmp" "$url" || rm -f "$tmp"
+
+ERC

@@ -1,0 +1,6 @@
+github-file: (http[s]?://)?.*github[.]com.*/(blob|raw)/.+
+gist-file: (http[s]?://)?gist.github[.]com.*/[^/]+/[^/]+(/raw.*)?
+repo: (http[s]?://)?.*github[.]com/[^/]+/[^/]
+repo: (http[s]?://)?.*gitlab[.][^/]+/[^/]+/[^/]
+
+# syntax:ssHash

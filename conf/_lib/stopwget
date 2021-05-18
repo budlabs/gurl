@@ -1,0 +1,5 @@
+#!/bin/bash
+
+wgetpid=$(pstree -p $PPID | awk '
+  match($0,/wget[(]([0-9]+)[)]/,g) {print g[1]; exit}')
+[[ -n $wgetpid ]] && kill -SIGQUIT "$wgetpid"

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# error message
+# ERM MESSAGE
+if IFPID polybar && IFCMD polify; then
+  polify --module gurl " $* "           
+elif IFPID xfce4-panel && IFCMD genmonify; then
+  genmonify --module gurl " $* "
+else
+  notify-send "$*"
+fi
