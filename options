@@ -1,0 +1,3 @@
+[--matchers-dir|-d DIR] URL [ARG...]
+--help|-h
+--version|-v

@@ -1,3 +1,2 @@
-next/
-snext/
-conf/.last
+.cache/
+**/_*
