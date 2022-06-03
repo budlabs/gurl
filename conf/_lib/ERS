@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# ERROR SUCCESS
+# ERS [options] MESSAGE
+
+# Display message as a notification in either
+# polify, genmonify or notify-send
+# -t timeout
+# -c command for leftclick
+# OBS use doublequotes inside command
+# ERS -t 15 -c 'subl "FILE"' "MESSAGE"
+
+while getopts :c:t: o ; do
+  eval "$o"='$OPTARG' ; done
+shift $((OPTIND-1))
+msg="$*"
+
+if IFPID polybar && IFCMD polify; then
+  exec polify --module gurl                        \
+              --foreground "$(mondo get activehl)" \
+              --background "$(mondo get activefg)" \
+              --expire-time "${t:-10}"             \
+              ${c:+--leftclick "${c:-}"}           \
+              ${c:+--msg "POLIPOP ${c:-}"}         \
+              " $msg "
+              
+elif IFPID xfce4-panel && IFCMD genmonify; then
+  exec genmonify --module gurl                \
+                 --expire-time "${t:-10}"     \
+                 --icon "face-cool"           \
+                 ${c:+--iconclick "${c:-}"}   \
+                 ${c:+--msg "POLIPOP ${c:-}"} \
+                 " $msg "
+else
+  exec notify-send --expire-time "${t:-10}" "$msg"
+fi

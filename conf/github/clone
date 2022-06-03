@@ -1,0 +1,38 @@
+#!/bin/bash
+
+[[ $1 =~ (http[s]?://)?.*github[.]com/([^/]+/[^/]+) ]] && {
+  repo=${BASH_REMATCH[2]}
+  gitlink="https://github.com/$repo.git"
+  # gitlink="git@github.com:$repo.git"
+}
+
+[[ $1 =~ (http[s]?://)?(gitlab[.][^/]+)/([^/]+/[^/]+) ]] && {
+  repo=${BASH_REMATCH[3]}
+  gitlink="https://${BASH_REMATCH[2]}/$repo.git"
+  # gitlink="git@${BASH_REMATCH[2]}:$repo.git"
+}
+
+clonedir="~/git/cln/${repo##*/}"
+
+trg=$(menu -p "clone $repo to: " -f "$clonedir")
+[[ -z $trg ]] && exit 1
+trgdir=${trg%/*} name=${trg##*/}
+[[ $trgdir =~ ^'~' ]] && trgdir=${trgdir/'~'/~}
+
+[[ -d $trgdir/$name ]] \
+  && ERX directory "$trg" already exist
+
+mkdir -p "$trgdir"
+cd  "$trgdir" || exit 1
+git clone "$gitlink" "$name" || {
+  cd - || exit 1
+  rmdir "$trgdir"
+  ERX clone failed
+}
+
+cd - || exit 1
+
+cmd="launchfm -p \"$trg\""
+msg+=("repo cloned to $trg")
+# msg+=("%{A1:$cmd:}%{A}")
+ERS -c "$cmd" -t 12 "${msg[*]}"

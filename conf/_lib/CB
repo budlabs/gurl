@@ -1,0 +1,6 @@
+#!/bin/bash
+
+IFCMD xclip && {
+  xclip -r -sel c <<< "$*"
+  xclip -r        <<< "$*"
+}

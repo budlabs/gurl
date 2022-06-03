@@ -1,0 +1,38 @@
+#!/bin/bash
+
+
+# -p PROMPT
+# -l LIST
+# -f FILTER
+# -o OPTIONS (dmenu options)
+
+# environment variable GURL_MENU
+for trgmenu in "$GURL_MENU" i3menu rofi dmenu ; do
+  IFCMD "$trgmenu" && break
+done
+
+IFCMD "$trgmenu" || ERX "dmenu or rofi not found"
+
+while getopts :p:l:f:o: opts ; do
+  eval "$opts"='$OPTARG'
+done ; shift $((OPTIND-1))
+
+echo -e "${l:--n}" | case "$GURL_MENU" in
+
+  rofi  ) 
+    rofi -dmenu ${o:-}   \
+         -p "${p:-}"     \
+         ${f:+-filter "${f:-}"} 
+  ;;
+
+  i3menu) 
+    i3menu --prompt "${p:-}"       \
+           --layout titlebar       \
+           --theme light           \
+           ${f:+--filter "${f:-}"} \
+           ${o:+--options "${o:-}"} 
+  ;;
+
+  dmenu|* ) dmenu ${o:-} -p "${p:-}" ;;
+
+esac

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+url=${1/blob/raw}
+
+[[ $url =~ .+/([^/?]+)([?].+)?$ ]] || exit 1
+filename=${BASH_REMATCH[1]}
+tmpfile="/tmp/$filename"
+
+startwget "$url" "$tmpfile" > /dev/null 2>&1 &
+trap 'stopwget' INT EXIT
+
+sublaunch
+
+wait
+
+subl "$tmpfile"

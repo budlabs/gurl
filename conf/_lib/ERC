@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# clear the gurl module
+
+if IFPID polybar && IFCMD polify; then
+  polify --module gurl --clear           
+elif IFPID xfce4-panel && IFCMD genmonify; then
+  genmonify --module gurl --clear
+fi

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# if the word 'clear' is one of the arguments
+# the menu will not display the default entries.
+# any arguments with a pipe, will be made into
+# a menu entry: TITLE|COMMAND
+# other arguments will be forwarded to selected
+# COMMAND
+
+for arg ; do 
+  [[ $arg = clear ]] && clear=1 && shift
+  [[ $arg =~ [|] ]] || continue
+  menu+=("$arg")
+  shift
+done
+
+# entries below will always be displayed
+# in the menu if "clear" is not specified
+((clear!=1)) && menu+=(
+  "Add to clipboard|CB"
+  "Open in browser|xdg-open"
+)
+
+list=$(printf '%s\n' "${menu[@]%%|*}")
+sel=$(menu -l "$list")
+[[ -z $sel ]] && exit 1
+
+for a in "${menu[@]}"; do
+  [[ $sel = "${a%|*}" ]] && act=${a#*|} && break
+done
+  
+exec ${act} "$@"
