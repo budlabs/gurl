@@ -6,64 +6,56 @@
 
 SHELL           := /bin/bash
 
+CUSTOM_TARGETS       =
+
+PREFIX              := /usr
+NAME                := $(notdir $(realpath .))
+VERSION             := 0
+UPDATED             := $(shell date +'%Y-%m-%d')
+CREATED             := $(UPDATED)
+AUTHOR              := anon
+CONTACT             := address
+ORGANISATION        :=
+CACHE_DIR           := .cache
+DOCS_DIR            := docs
+CONF_DIR            := conf
+AWK_DIR             := awklib
+FUNCS_DIR           := func
+INDENT              := $(shell echo -e "  ")
+USAGE                = $(NAME) [OPTIONS]
+OPTIONS_FILE        := options
+MANPAGE              = $(NAME).1
+MONOLITH             = _$(NAME).sh
+BASE                := _init.sh
+SHBANG              := \#!/bin/bash
+OPTIONS_ARRAY_NAME  := _o
+MANPAGE_OUT          = _$(MANPAGE)
+FUNC_STYLE          := "() {"
 
 ifneq ($(wildcard config.mak),)
-include config.mak
+  include config.mak
 endif
 
-PREFIX          ?= /usr
-NAME            ?= $(notdir $(realpath .))
-VERSION         ?= 0
-UPDATED         ?= $(shell date +'%Y-%m-%d')
-CREATED         ?= $(UPDATED)
-AUTHOR          ?= anon
-CONTACT         ?= address
-ORGANISATION    ?=
-CACHE_DIR       ?= .cache
-DOCS_DIR        ?= docs
-CONF_DIR        ?= conf
-AWK_DIR         ?= awklib
-FUNCS_DIR       ?= func
-INDENT          ?= $(shell echo -e "  ")
-USAGE           ?= $(NAME) [OPTIONS]
-OPTIONS_FILE    ?= options
-DEFAULT_OPTIONS ?= --hello|-o WORD --help|-h --version|-v
-MONOLITH        ?= _$(NAME).sh
-BASE            ?= _init.sh
-SHBANG          ?= \#!/bin/bash
-MANPAGE         ?=
-LICENSE         ?= LICENSE
-README          ?=
-
-MANPAGE_LAYOUT  ?=             \
- $(CACHE_DIR)/help_table.txt
-
-README_LAYOUT  ?=              \
-	$(DOCS_DIR)/readme_banner.md \
-	$(MANPAGE_LAYOUT)
-
+manpage_section      = $(subst .,,$(suffix $(MANPAGE)))
 function_createconf := $(FUNCS_DIR)/_createconf.sh
 function_awklib     := $(FUNCS_DIR)/_awklib.sh
 
-
-
 ifneq ($(wildcard $(CONF_DIR)/*),)
-include_createconf = $(function_createconf)
-conf_dirs      = $(shell find $(CONF_DIR) -type d)
-conf_files     = $(shell find $(CONF_DIR) -type f)
+  include_createconf   = $(function_createconf)
+  conf_dirs            = $(shell find $(CONF_DIR) -type d)
+  conf_files           = $(shell find $(CONF_DIR) -type f)
 else
-$(shell rm -f $(function_createconf))
+  $(shell rm -f $(function_createconf))
 endif
 
 ifneq ($(wildcard $(AWK_DIR)/*),)
-
-include_awklib  = $(function_awklib)
-awk_files       = $(wildcard $(AWK_DIR)/*)
+  include_awklib       = $(function_awklib)
+  awk_files            = $(wildcard $(AWK_DIR)/*)
 else
-$(shell rm -f $(function_awklib))
+  $(shell rm -f $(function_awklib))
 endif
 
-option_docs = $(wildcard $(DOCS_DIR)/options/*)
+option_docs          = $(wildcard $(DOCS_DIR)/options/*)
 
 generated_functions := $(function_err) $(include_createconf) $(include_awklib)
 function_files := \
@@ -78,25 +70,24 @@ function_files := \
 # to be rebuilt on this event.
 
 ifneq ($(wildcard $(CACHE_DIR)/got_func),)
-ifneq ($(wildcard $(FUNCS_DIR)/*),)
-ifneq ($(file < $(CACHE_DIR)/got_func), 1)
-$(shell echo 1 > $(CACHE_DIR)/got_func)
-endif
-else
-ifneq ($(file < $(CACHE_DIR)/got_func), 0)
-$(shell echo 0 > $(CACHE_DIR)/got_func)
-endif
-endif
+  ifneq ($(wildcard $(FUNCS_DIR)/*),)
+    ifneq ($(file < $(CACHE_DIR)/got_func), 1)
+      $(shell echo 1 > $(CACHE_DIR)/got_func)
+    endif
+  else
+    ifneq ($(file < $(CACHE_DIR)/got_func), 0)
+      $(shell echo 0 > $(CACHE_DIR)/got_func)
+    endif
+  endif
 endif
 
+$(CACHE_DIR)/got_func: | $(CACHE_DIR)/
+	@$(info making $@)
+	[[ -d $${tmp:=$(FUNCS_DIR)} ]] && tmp=1 || tmp=0
+	echo $$tmp > $@
+
 clean:
-	rm -rf \
-		$(MONOLITH)             \
-		$(BASE)                 \
-		$(CACHE_DIR)            \
-		$(generated_functions)  \
-		$(MANPAGE_OUT)          \
-		$(README)               
+	rm -rf $(wildcard _*) $(CACHE_DIR) $(generated_functions)
 
 install-dev: $(BASE) $(NAME)
 	ln -s $(realpath $(NAME)) $(PREFIX)/bin/$(NAME)
@@ -104,78 +95,68 @@ install-dev: $(BASE) $(NAME)
 uninstall-dev: $(PREFIX)/bin/$(NAME)
 	rm $^
 
-
-
 check: all
 	shellcheck $(MONOLITH)
 
-$(BASE): config.mak $(CACHE_DIR)/getopt $(CACHE_DIR)/print_help.sh $(CACHE_DIR)/got_func
+$(BASE): config.mak $(CACHE_DIR)/getopt $(CACHE_DIR)/print_help.sh $(CACHE_DIR)/print_version.sh $(CACHE_DIR)/got_func
 	@$(info making $@)
-	printf '%s\n' '$(SHBANG)' '' 'exec 3>&2' '' > $@
-	$(print_version)
-	grep -vhE -e '^#!/' $(CACHE_DIR)/print_help.sh >> $@
+	{
+		printf '%s\n' '$(SHBANG)' '' 
 
-	echo "" >> $@
+		grep -vhE -e '^#!/' $(CACHE_DIR)/print_version.sh | sed '0,/2/s//3/'
+		grep -vhE -e '^#!/' $(CACHE_DIR)/print_help.sh    | sed '0,/2/s//3/'
 
-	[[ -d $(FUNCS_DIR) ]] && {
-		printf '%s\n' \
-		'for ___f in "$$__dir/$(FUNCS_DIR)"/*; do' \
-		'$(INDENT). "$$___f" ; done ; unset -v ___f' >> $@
-	}
+		echo
 
-	echo "" >> $@
-	cat $(CACHE_DIR)/getopt >> $@
+		[[ -d $(FUNCS_DIR) ]] && {
+			printf '%s\n' \
+			'for ___f in "$$__dir/$(FUNCS_DIR)"/*; do' \
+			'$(INDENT). "$$___f" ; done ; unset -v ___f'
+		}
 
-	echo 'main "$$@"' >> $@
+		echo
+		
+		cat $(CACHE_DIR)/getopt
 
-$(MONOLITH): $(NAME) $(CACHE_DIR)/print_help.sh $(function_files) $(CACHE_DIR)/getopt
+		echo "((BASHBUD_VERBOSE)) && _o[verbose]=1"
+		echo
+
+		echo 'main "$$@"'
+	} > $@
+
+$(MONOLITH): $(CACHE_DIR)/print_version.sh $(NAME) $(CACHE_DIR)/print_help.sh $(function_files) $(CACHE_DIR)/getopt
 	@$(info making $@)
-	printf '%s\n' '$(SHBANG)' '' > $@
-	$(print_version)
-	re='#bashbud$$'
-	for f in $^; do
-		# ignore files where the first line ends with '#bashbud'
-		[[ $$(head -n1 $$f) =~ $$re ]] && continue	
-		# ignore lines that ends with '#bashbud' (and shbangs)
-		grep -vhE -e '^#!/' -e '#bashbud$$' $$f >> $@
-	done
+	{
+		printf '%s\n' '$(SHBANG)' ''
+		re='#bashbud$$'
+		for f in $^; do
+			# ignore files where the first line ends with '#bashbud'
+			[[ $$(head -n1 $$f) =~ $$re ]] && continue	
+			# ignore lines that ends with '#bashbud' (and shbangs)
+			grep -vhE -e '^#!' -e '#bashbud$$' $$f
+		done
 
-	printf '%s\n' '' 'main "@$$"' >> $@
+		echo 'main "$$@"'
+	} > $@
 	
 	chmod +x $@
 
-ifneq ($(MANPAGE),)
-MANPAGE_OUT ?= _$(MANPAGE)
-MANPAGE_GENERATE := $(MANPAGE_OUT)
-else ifneq ($(MANPAGE_OUT),)
-ifeq ($(findstring _,$(MANPAGE_OUT)),)
-MANPAGE = $(MANPAGE_OUT)
-endif
-endif
+$(CACHE_DIR)/copyright.txt: config.mak
+	@$(info making $@)
+	year_created=$(CREATED) year_created=$${year_created%%-*}
+	year_updated=$$(date +'%Y')
 
-ifdef MANPAGE_OUT
-manpage_section := $(subst .,,$(suffix $(MANPAGE_OUT)))
-endif
+	copy_text="Copyright (c) "
 
-$(MANPAGE_GENERATE): $(CACHE_DIR)/manpage.md
-	@$(info generating $@ from $^)
-	uppercase_name=$(NAME)
-	uppercase_name=$${uppercase_name^^}
-	{
-		printf '%s\n' \
-			"$$uppercase_name $(manpage_section) $(UPDATED) $(ORGANISATION) \"User Manuals\"" \
-		  ======================================= \
-		  ''   \
-		  NAME \
-		  ---- \
-		  ''
+	((year_created == year_updated)) \
+		&& copy_text+=$$year_created   \
+		|| copy_text+="$${year_created}-$${year_updated}, $(AUTHOR)"
 
-		  cat $<
-	} | go-md2man > $@
+	[[ $${org:=$(ORGANISATION)} ]] \
+		&& copy_text+=" of $(ORGANISATION)  "
 
-$(CACHE_DIR)/manpage.md: $(MANPAGE_LAYOUT) config.mak
-	@$(info creating $@)
-	cat $(MANPAGE_LAYOUT) > $@
+	printf '%s\n' \
+		"$$copy_text" "SPDX-License-Identifier: $(LICENSE)" > $@
 
 # if a file in docs/options contains more than
 # 2 lines, it will get added to the file .cache/long_help.md
@@ -193,6 +174,11 @@ $(CACHE_DIR)/long_help.md: $(CACHE_DIR)/options_in_use $(option_docs)
 		tail -qn +3 "$(DOCS_DIR)/options/$$option"
 		echo
 	done > $@
+
+$(CACHE_DIR)/synopsis.txt: $(OPTIONS_FILE) | $(CACHE_DIR)/
+	@$(info making $@)
+	sed 's/^/$(NAME) /g;s/*//g' $< > $@
+
 $(CACHE_DIR)/help_table.txt: $(CACHE_DIR)/long_help.md
 	@$(info making $@)
 	for option in $$(cat $(CACHE_DIR)/options_in_use); do
@@ -207,262 +193,265 @@ $(CACHE_DIR)/help_table.txt: $(CACHE_DIR)/long_help.md
 		paste <(echo "$$frag") <(echo "$$desc") | tr -d '\t'
 	done > $@
 
-$(CACHE_DIR)/synopsis.txt: $(OPTIONS_FILE)
+$(CACHE_DIR)/print_version.sh: config.mak | $(CACHE_DIR)/
 	@$(info making $@)
-	sed 's/^/    $(NAME) /g;s/$$/  /g' $< > $@
-	
+	echo $(SHBANG)
+	fstyle=$(FUNC_STYLE)
+	printf "__print_version$${fstyle}\n" > $@                          
+	printf '%s\n'                                            \
+		"$(INDENT)>&2 printf '%s\n' \\"                        \
+		"$(INDENT)$(INDENT)'$(NAME) - version: $(VERSION)' \\" \
+		"$(INDENT)$(INDENT)'updated: $(UPDATED) by $(AUTHOR)'" \
+		"}"                                                    \
+		"" >> $@
+
 $(CACHE_DIR)/print_help.sh: $(CACHE_DIR)/help_table.txt $(CACHE_DIR)/synopsis.txt 
 	@$(info making $@)
 	{
-		printf '%s\n' \
-			'$(SHBANG)' '' "__print_help()" "{" "$(INDENT)cat << 'EOB' >&3  "
+		echo $(SHBANG)
+		fstyle=$(FUNC_STYLE)
+		printf "__print_help$${fstyle}\n"
+		echo "$(INDENT)cat << 'EOB' >&2  "
 		if [[ options = "$(USAGE)" ]]; then
 			cat $(CACHE_DIR)/synopsis.txt
 			echo
 		else 
-			printf '%s\n' '    usage: $(USAGE)' ''
+			printf '%s\n' 'usage: $(USAGE)' ''
 			echo
 		fi
 		cat $(CACHE_DIR)/help_table.txt
 		printf '%s\n' 'EOB' '}'
 	} > $@
 
-$(README): $(README_LAYOUT) config.mak
-	@$(info creating $@)
-	cat $(README_LAYOUT) > $@
+$(function_createconf): $(conf_files) | $(FUNCS_DIR)/
+	@$(info making $@)
+	{
+		printf '%s\n' \
+			'$(SHBANG)'                                                            \
+			''                                                                     \
+			'### _createconf() function is automatically generated'                \
+			'### from makefile based on the content of the $(CONF_DIR)/ directory' \
+			''
+
+
+		fstyle=$(FUNC_STYLE)
+		printf "_createconf$${fstyle}\n"
+
+		echo 'local trgdir="$$1"'
+
+		echo 'mkdir -p $(subst $(CONF_DIR),"$$trgdir",$(conf_dirs))'
+		for f in $(conf_files); do
+
+			echo ""
+			echo 'if [[ -d $$__dir ]]; then #bashbud'
+			echo "cat \"\$$__dir/$$f\" > \"$${f/$(subst /,\/,$(CONF_DIR))/\$$trgdir}\" #bashbud"
+			echo 'else #bashbud'
+			echo "cat << 'EOCONF' > \"$${f/$(subst /,\/,$(CONF_DIR))/\$$trgdir}\""
+			cat "$$f"
+			echo "EOCONF"
+			echo 'fi #bashbud'
+			[[ -x $$f ]] && echo "chmod +x \"$${f/$(subst /,\/,$(CONF_DIR))/\$$trgdir}\""
+		done
+
+		echo '}'
+	} > $@
 
 $(function_awklib): $(awk_files) | $(FUNCS_DIR)/
-	@printf '%s\n' \
-		'#!/bin/bash'                                                           \
-		''                                                                      \
-		'### _awklib() function is automatically generated'                     \
-		'### from makefile based on the content of the $(AWK_DIR)/ directory'   \
-		''                                                                      \
-		'_awklib() {'                                                           \
-		'[[ -d $$__dir ]] && { cat "$$__dir/$(AWK_DIR)/"* ; return ;} #bashbud' \
-		"cat << 'EOAWK'"   > $@
-		cat $(awk_files)  >> $@
-		printf '%s\n' "EOAWK" '}' >> $@
+	@$(info making $@)
+	{
+		printf '%s\n' \
+			'$(SHBANG)'                                                             \
+			''                                                                      \
+			'### _awklib() function is automatically generated'                     \
+			'### from makefile based on the content of the $(AWK_DIR)/ directory'   \
+			''
 
-$(function_createconf): $(conf_files) | $(FUNCS_DIR)/
-
-	@printf '%s\n' \
-		'#!/bin/bash'                                                          \
-		''                                                                     \
-		'### _createconf() function is automatically generated'                \
-		'### from makefile based on the content of the $(CONF_DIR)/ directory' \
-		''                                                                     \
-		'_createconf() {'                                                      \
-		'local trgdir="$$1"' > $@
-
-	echo 'mkdir -p $(subst $(CONF_DIR),"$$trgdir",$(conf_dirs))' >> $@
-	for f in $(conf_files); do
-
-		echo "" >> $@
-		echo 'if [[ -d $$__dir ]]; then #bashbud' >> $@
-		echo "cat \"\$$__dir/$$f\" > \"$${f/$(subst /,\/,$(CONF_DIR))/\$$trgdir}\" #bashbud" >> $@
-		echo 'else #bashbud' >> $@
-		echo "cat << 'EOCONF' > \"$${f/$(subst /,\/,$(CONF_DIR))/\$$trgdir}\"" >> $@
-		cat "$$f" >> $@
-		echo "EOCONF" >> $@
-		echo 'fi #bashbud' >> $@
-		[[ -x $$f ]] && echo "chmod +x \"$${f/$(subst /,\/,$(CONF_DIR))/\$$trgdir}\"" >> $@
-	done
-
-	echo '}' >> $@
+		fstyle=$(FUNC_STYLE)
+		printf "_awklib$${fstyle}\n"
+		printf '%s\n' \
+			'[[ -d $$__dir ]] && { cat "$$__dir/$(AWK_DIR)/"* ; return ;} #bashbud' \
+			"cat << 'EOAWK'"
+		cat $(awk_files)
+		printf '%s\n' "EOAWK" '}'
+	} > $@
 
 $(CACHE_DIR)/:
 	@$(info creating $(CACHE_DIR)/ dir)
-	mkdir -p $(CACHE_DIR) $(DOCS_DIR)/options
-	[[ -d $(FUNCS_DIR) ]] \
-		&& echo 1 > $(CACHE_DIR)/got_func \
-		|| echo 0 > $(CACHE_DIR)/got_func
+	mkdir -p $(CACHE_DIR) $(CACHE_DIR)/options
 
 $(FUNCS_DIR)/:
 	@$(info creating $(FUNCS_DIR)/ dir)
 	mkdir -p $(FUNCS_DIR)
 
-define print_version =
-@printf '%s\n'                                \
-	"__print_version()"                         \
-	"{"                                         \
-	"$(INDENT)>&3 printf '%s\n' \\"                    \
-	"$(INDENT)$(INDENT)'$(NAME) - version: $(VERSION)' \\"    \
-	"$(INDENT)$(INDENT)'updated: $(UPDATED) by $(AUTHOR)'"    \
-	"}"                                                       \
-	"" >> $@
-endef
-
 $(CACHE_DIR)/options_in_use $(CACHE_DIR)/getopt &: $(OPTIONS_FILE) | $(CACHE_DIR)/
 	@$(info parsing $(OPTIONS_FILE))
-	mkdir -p $(CACHE_DIR)/options
-	$(parse_options) > $(CACHE_DIR)/getopt
+	mkdir -p $(DOCS_DIR)/options
+	gawk '
+	BEGIN { RS=" |\\n" }
 
-
-define parse_options =
-@gawk '
-BEGIN { RS=" |\\n" }
-
-/./ {
-	if (match($$0,/^\[?--([^][|[:space:]]+)(([|]-)(\S))?\]?$$/,ma)) 
-	{
-		gsub(/[][]/,"",$$0)
-		opt_name = ma[1]
-		if (length(opt_name) > longest)
-			longest = length(opt_name)
-		options[opt_name]["long_name"]  = opt_name
-		if (ma[4] ~ /./) 
-			options[opt_name]["short_name"] = ma[4]
-	}
-
-	else if (match($$0,/^\[?-(\S)([|]--([^][:space:]]+))?\]?$$/,ma))
-	{
-		gsub(/[][]/,"",$$0)
-		opt_name = ma[1]
-		if (ma[3] ~ /./)
+	/./ {
+		if (match($$0,/^\[?--([^][|[:space:]]+)(([|]-)(\S))?\]?$$/,ma)) 
 		{
-			opt_name = ma[3]
-			options[opt_name]["short_name"] = ma[1]
+			gsub(/[][]/,"",$$0)
+			opt_name = ma[1]
+			if (length(opt_name) > longest)
+				longest = length(opt_name)
 			options[opt_name]["long_name"]  = opt_name
+			if (ma[4] ~ /./) 
+				options[opt_name]["short_name"] = ma[4]
 		}
-		else
-			options[opt_name]["short_name"] = opt_name
 
-	}
-
-	else if (opt_name in options && !("arg" in options[opt_name]))
-	{
-
-		if ($$0 ~ /^[[]/)
-			options[opt_name]["suffix"] = "::"
-		else
-			options[opt_name]["suffix"] = ":"
-
-		gsub(/[][]/,"",$$0)
-		if (length($$0) > longest_arg)
-			longest_arg = length($$0)
-		options[opt_name]["arg"] = $$0
-	}
-}
-
-END {
-
-	for (o in options)
-	{
-
-		docfile = "$(DOCS_DIR)/options/" o
-		docfile_fragment = "$(CACHE_DIR)/options/" o
-		options_in_use = options_in_use " " o
-
-		if(o ~ /./)
+		else if (match($$0,/^\[?-(\S)([|]--([^][:space:]]+))?\]?$$/,ma))
 		{
-			if ("short_name" in options[o])
+			gsub(/[][]/,"",$$0)
+			opt_name = ma[1]
+			if (ma[3] ~ /./)
 			{
-				out = "-" options[o]["short_name"]
-				if ("long_name" in options[o])
-					out = out ", "
-				else
-					out = out sprintf("%-" longest "s", " ")
+				opt_name = ma[3]
+				options[opt_name]["short_name"] = ma[1]
+				options[opt_name]["long_name"]  = opt_name
 			}
 			else
-				out = ""
+				options[opt_name]["short_name"] = opt_name
 
-			if ("long_name" in options[o]) {
-				string_lenght = longest + ("short_name" in options[o] ? 0 : 4)
-				out = out sprintf ("--%-" string_lenght "s", options[o]["long_name"])
-			}
-			
-			if ("arg" in options[o])
-				out = out sprintf (" %-" longest_arg "s", gensub (/\|/,"\\\\|","g",options[o]["arg"]))
-
-			# 6 = -s, --
-			# longest = longest long option name
-			# 1 space after longoption
-			# longest_arg + space
-			fragment_length = 6+longest+1+longest_arg
-			out = "    " sprintf ("%-" fragment_length "s | ", out)
-			print out > docfile_fragment
-
-			if (system("[ ! -f " docfile " ]") == 0)
-				print "short description  " > docfile
 		}
+
+		# ignore "Args" prefixed with an asterisk (*)
+		else if (opt_name in options && !("arg" in options[opt_name]) && $$0 ~ /^[^*]/)
+		{
+
+			if ($$0 ~ /^[[]/)
+				options[opt_name]["suffix"] = "::"
+			else
+				options[opt_name]["suffix"] = ":"
+
+			gsub(/[][]/,"",$$0)
+			if (length($$0) > longest_arg)
+				longest_arg = length($$0)
+			options[opt_name]["arg"] = $$0
+		}
+	}
+
+	END {
+
+		# sort array in alphabetical order
+		# https://www.gnu.org/software/gawk/manual/html_node/Controlling-Scanning.html
+		PROCINFO["sorted_in"] = "@ind_num_asc"
+
+		for (o in options)
+		{
+
+			docfile = "$(DOCS_DIR)/options/" o
+			docfile_fragment = "$(CACHE_DIR)/options/" o
+			options_in_use = options_in_use " " o
+
+			if(o ~ /./)
+			{
+				if ("short_name" in options[o])
+				{
+					out = "-" options[o]["short_name"]
+					if ("long_name" in options[o])
+						out = out ", "
+					else
+						out = out sprintf("%-" longest "s", " ")
+				}
+				else
+					out = ""
+
+				if ("long_name" in options[o]) {
+					string_lenght = longest + ("short_name" in options[o] ? 0 : 4)
+					out = out sprintf ("--%-" string_lenght "s", options[o]["long_name"])
+				}
 				
-		if ("long_name" in options[o])
-		{
-			long_options = long_options "," options[o]["long_name"]
-			if ("suffix" in options[o])
-				long_options = long_options options[o]["suffix"]
-		}
+				if ("arg" in options[o])
+					out = out sprintf (" %-" longest_arg "s", gensub (/\|/,"\\\\|","g",options[o]["arg"]))
 
-		if ("short_name" in options[o])
-		{
-			short_options = short_options "," options[o]["short_name"]
-			if ("suffix" in options[o])
-				short_options = short_options options[o]["suffix"]
-		}
-	}
+				# 6 = -s, --
+				# longest = longest long option name
+				# 1 space after longoption
+				# longest_arg + space
+				fragment_length = 6+longest+1+longest_arg
+				out = sprintf ("%-" fragment_length "s | ", out)
+				print out > docfile_fragment
 
-	print options_in_use > "$(CACHE_DIR)/options_in_use"
-
-  print ""
-  print "declare -A _o"
-  print ""
-	print "options=$$(getopt \\"
-	print "  --name \"[ERROR]:" name "\" \\"
-	if (short_options ~ /./)
-		printf ("  --options \"%s\" \\\n", gensub(/^,/,"",1,short_options))
-	printf ("  --longoptions \"%s\"  -- \"$$@\"\n", gensub(/^,/,"",1,long_options))
-	print ") || exit 98"
-	print ""
-	print "eval set -- \"$$options\""
-	print "unset -v options"
-	print ""
-	print "while true; do"
-	print "  case \"$$1\" in"
-	printf ("    --%-" longest+1 "s| -%s ) __print_help && exit ;;\n", "help", "h")
-	printf ("    --%-" longest+1 "s| -%s ) __print_version && exit ;;\n", "version", "v")
-	for (o in options)
-	{
-		if (o !~ /^(version|help)$$/)
-		{
+				if (system("[ ! -f " docfile " ]") == 0)
+					print "short description  " > docfile
+			}
+					
 			if ("long_name" in options[o])
-				printf ("    --%-" longest+1 "s", options[o]["long_name"])
-			else
-				printf ("%-" longest+7 "s", "")
+			{
+				long_options = long_options "," options[o]["long_name"]
+				if ("suffix" in options[o])
+					long_options = long_options options[o]["suffix"]
+			}
 
 			if ("short_name" in options[o])
-				printf ("%s -%s ", ("long_name" in options[o] ? "|" : " "), options[o]["short_name"])
-			else
-				printf ("%s", "     ")
-
-			if ("suffix" in options[o])
 			{
-				if (options[o]["suffix"] == "::")
-					printf (") _o[%s]=$${2:-1} ; shift ;;\n", o)
-				else
-					printf (") _o[%s]=$$2 ; shift ;;\n", o)
+				short_options = short_options "," options[o]["short_name"]
+				if ("suffix" in options[o])
+					short_options = short_options options[o]["suffix"]
 			}
-			else
-				printf (") _o[%s]=1 ;;\n", o)
 		}
-	}
 
-	print "    -- ) shift ; break ;;"
-	print "    *  ) break ;;"
-	print "  esac"
-	print "  shift"
-	print "done"
-	print ""
-	print "((BASHBUD_VERBOSE)) && _o[verbose]=1 #bashbud"
-	print ""
-}
-' $(OPTIONS_FILE)                  \
-		cache=$(CACHE_DIR)             \
-		name=$(NAME)
-endef
+		print options_in_use > "$(CACHE_DIR)/options_in_use"
+
+	  print ""
+	  print "declare -A $(OPTIONS_ARRAY_NAME)"
+	  print ""
+		print "options=$$(getopt \\"
+		print "  --name \"[ERROR]:" name "\" \\"
+		if (short_options ~ /./)
+			printf ("  --options \"%s\" \\\n", gensub(/^,/,"",1,short_options))
+		printf ("  --longoptions \"%s\"  -- \"$$@\"\n", gensub(/^,/,"",1,long_options))
+		print ") || exit 98"
+		print ""
+		print "eval set -- \"$$options\""
+		print "unset -v options"
+		print ""
+		print "while true; do"
+		print "  case \"$$1\" in"
+		printf ("    --%-" longest+1 "s| -%s ) __print_help && exit ;;\n", "help", "h")
+		printf ("    --%-" longest+1 "s| -%s ) __print_version && exit ;;\n", "version", "v")
+		for (o in options)
+		{
+			if (o !~ /^(version|help)$$/)
+			{
+				if ("long_name" in options[o])
+					printf ("    --%-" longest+1 "s", options[o]["long_name"])
+				else
+					printf ("%-" longest+7 "s", "")
+
+				if ("short_name" in options[o])
+					printf ("%s -%s ", ("long_name" in options[o] ? "|" : " "), options[o]["short_name"])
+				else
+					printf ("%s", "     ")
+
+				if ("suffix" in options[o])
+				{
+					if (options[o]["suffix"] == "::")
+						printf (") _o[%s]=$${2:-1} ; shift ;;\n", o)
+					else
+						printf (") _o[%s]=$$2 ; shift ;;\n", o)
+				}
+				else
+					printf (") _o[%s]=1 ;;\n", o)
+			}
+		}
+
+		print "    -- ) shift ; break ;;"
+		print "    *  ) break ;;"
+		print "  esac"
+		print "  shift"
+		print "done"
+		print ""
+	}
+	' $(OPTIONS_FILE)                  \
+			cache=$(CACHE_DIR)             \
+			name=$(NAME) > $(CACHE_DIR)/getopt
 
 other_maks := $(filter-out config.mak,$(wildcard *.mak))
 -include $(other_maks)
+
 # by having all:  last, it is possible to add CUSTOM_TARGETS
 # in "other_maks", and have them automatically apply
-all: $(CUSTOM_TARGETS) $(MONOLITH) $(MANPAGE_GENERATE) $(README) $(BASE)
+all: $(CUSTOM_TARGETS) $(MONOLITH) $(BASE)

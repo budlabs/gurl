@@ -1,5 +1,3 @@
-## USAGE
-
 When **gurl** is executed it will match it's first
 argument, (URL) against rules defined in files named `match`
 located in **MATCHERS_DIR** (*defaults to ~/.config/gurl*)

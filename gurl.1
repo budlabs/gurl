@@ -1,0 +1,275 @@
+.nh
+.TH GURL  1 2022-05-27 budlabs "User Manuals"
+.SH NAME
+.PP
+gurl - ganoo slash URL handler and plumber framework
+
+.SH USAGE
+.PP
+gurl [--matchers-dir|-d DIR] URL [ARG...]
+When \fBgurl\fP is executed it will match it's first
+argument, (URL) against rules defined in files named \fB\fCmatch\fR
+located in \fBMATCHERS_DIR\fP (\fIdefaults to ~/.config/gurl\fP)
+including subdirectories. The syntax for the rules are as
+follows:
+
+.PP
+.RS
+
+.nf
+ACTION: PATTERN
+
+# blank lines and lines starting with sharp (#)
+# will be ignored.
+ACTION2: PATTERN2
+
+.fi
+.RE
+
+.PP
+\fIACTION\fP is a command either in \fBPATH\fP or relative to the
+\fImatch file\fP\&.
+.br
+\fIPATTERN\fP is a \fB\fCawk(1)\fR compatible regular expression.
+
+.PP
+All arguments passed to \fBgurl\fP will be forwarded to
+\fIACTION\fP\&. If \fIACTION\fP is a executable file in
+\fBMATCHERS_DIR\fP, the directory of the \fIACTION\fP will be the
+actions working directory, \fBMATCHERS_DIR/_lib\fP will be
+added to \fBPATH\fP\&.
+
+.PP
+If no match is found, \fIACTION\fP is set to \fBMATCHERS_DIR/default\fP\&.
+
+.SH EXAMPLES
+.PP
+\fBgurl\fP will add the following filestructure the first
+time it is invoked. No files or directories are mandatory,
+but patterns must be declared in files named \fB\fCmatch\fR . Be
+sure to set scripts to be executable. (bash scripts are used
+in the example, but any executable files will work).
+
+.PP
+.RS
+
+.nf
+~/.config/gurl
+  _lib/
+    message.sh
+    ynp.sh
+    cb.sh
+  github/
+    match
+    repo.sh
+    ghfile.sh
+    assets/
+      vars
+  youtube/
+    youtube.sh
+  .last
+  match
+  default
+
+.fi
+.RE
+
+.PP
+\fB\fC$ gurl https://github.com/budlabs/gurl\fR - this will match
+the second pattern in \fB\fCgithub/match\fR and execute
+\fB\fCgithub/repo.sh\fR\&. Notice how the path to the action is
+relative to match file it is declared in. arguments (the URL
+in this case) passed to \fBgurl\fP will get saved to \fB\fC\&.last\fR,
+which can be handy when writing the patterns.
+
+.PP
+\fB\fC~/.config/gurl/github/match\fR
+
+.PP
+.RS
+
+.nf
+ghfile.sh: (http[s]?://)?.*github[.]com.*/(blob|raw)/.+
+repo.sh:   (http[s]?://)?.*github[.]com/[^/]+/[^/]
+
+.fi
+.RE
+
+.PP
+executables in \fB\fC_lib/\fR can be executed without specifying
+the path. And files (assets/vars) can be sourced using a
+path relative to the scriptfile.
+
+.PP
+\fB\fC~/.config/gurl/github/repo.sh\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+
+source assets/vars
+
+[[ $1 =~ (http[s]?://)?.*github[.]com/([^/]+/[^/]+) ]] \\
+    && repo=${BASH_REMATCH[2]}
+
+prompt="clone $repo to $clone_dir/${repo#*/}? "
+
+[[ $(ynp.sh "$prompt") = yes ]] && message.sh "you answered yes"
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/github/assets/vars\fR
+
+.PP
+.RS
+
+.nf
+clone_dir=$HOME/git/clones
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/_lib/message.sh\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+notify-send "$*"
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/_lib/ynp.sh\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+echo -e "yes\\nno" | dmenu -p "$1"
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/_lib/cb.sh\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+echo -n "$1" | xclip -sel c
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/github/ghfile.sh\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+message.sh "$1 is a github file, download link in clipboard"
+
+cb.sh "${1/blob/raw}"
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/youtube/youtube.sh\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+message.sh "a youtube link!"
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/.last\fR
+
+.PP
+.RS
+
+.nf
+https://github.com/budlabs/gurl
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/default\fR
+
+.PP
+.RS
+
+.nf
+#!/bin/bash
+echo no pattern matching: "$1"
+
+.fi
+.RE
+
+.PP
+\fB\fC~/.config/gurl/match\fR
+
+.PP
+.RS
+
+.nf
+youtube/youtube.sh: (http[s]?://)?.*youtube[.]com.*
+notify-send: (http[s]?://)?.*google[.]com.*
+
+.fi
+.RE
+
+.PP
+notice how commands can be used for actions (\fB\fCnotify-send\fR).
+
+.SH OPTIONS
+.PP
+.RS
+
+.nf
+-h, --help          | print help and exit  
+-d, --matchers-dir  | override the environment variable MATCHERS_DIR
+-v, --version       | print version info and exit  
+
+.fi
+.RE
+
+.SH ENVIRONMENT
+.SS XDG_CONFIG_HOME
+.PP
+defaults to: \fB\fC~/.config\fR
+
+.SS MATCHERS_DIR
+.PP
+defaults to: \fB\fC$XDG_CONFIG_HOME/gurl\fR
+
+.SH CONTACT
+.PP
+Send bugs and feature requests to:
+.br
+https://github.com/budlabs/gurl/issues
+
+.SH COPYRIGHT
+.PP
+Copyright (c) 2020-2022, budRich of budlabs
+.br
+SPDX-License-Identifier: BSD-2-Clause

@@ -1,4 +1,3 @@
-# gurl - ganoo slash URL handler and plumber framework 
 
 Imagine you have a URL to a podcast episode.  You
 want to download the file,  edit the filename in

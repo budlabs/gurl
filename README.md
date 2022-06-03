@@ -1,4 +1,4 @@
-# gurl - ganoo slash URL handler and plumber framework 
+# gurl - ganoo slash URL handler and plumber framework
 
 Imagine you have a URL to a podcast episode.  You
 want to download the file,  edit the filename in
@@ -41,8 +41,6 @@ $ gurl -v
 gurl - version: 2020.03.26.3
 updated: 2020-03-26 by budRich
 ```
-## USAGE
-
 When **gurl** is executed it will match it's first
 argument, (URL) against rules defined in files named `match`
 located in **MATCHERS_DIR** (*defaults to ~/.config/gurl*)
@@ -203,6 +201,3 @@ notice how commands can be used for actions (`notify-send`).
 
 See old releasenotes in [docs/releasenotes](docs/releasenotes)
 
-#### 2022.04.29
-
-Updated build system
