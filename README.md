@@ -1,3 +1,5 @@
+# MAINTAINED AT https://git.budlabs.xyz/bud/gurl
+
 # gurl - ganoo slash URL handler and plumber framework
 
 Imagine you have a URL to a podcast episode.  You
